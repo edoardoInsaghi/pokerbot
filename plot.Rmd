@@ -1,0 +1,15 @@
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+runs = read.csv("logs.csv", header=T)
+runs$hands = 1:nrow(runs)
+df = runs %>% pivot_longer(    
+  cols = -hands,
+  names_to = "Player",
+  values_to = "Stack")
+
+ggplot(data=df, aes(x=hands, y=Stack, col=Player)) + geom_line() + theme_bw()
+```
+
