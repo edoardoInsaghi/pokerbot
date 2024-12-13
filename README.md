@@ -1,3 +1,6 @@
+very much still a work in progress
+
+
 # pokerbot
 RL project @UNITS 
 
