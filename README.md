@@ -1,5 +1,4 @@
 # pokerbot
-RL project @UNITS 
 
 A bunch of resources I am using along the way: 
 - This is where I have stolen from the poker hand evaluator [https://github.com/HenryRLee/PokerHandEvaluator]
