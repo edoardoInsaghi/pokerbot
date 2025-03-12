@@ -76,8 +76,6 @@ void compute_5_hand_distribution_fast(int card1, int card2, std::ofstream& f1) {
 
                         float strength = ((float)(hand_strength[0] + hand_strength[1] / 2.0)) / (hand_strength[0] + hand_strength[1] + hand_strength[2]);
                         data_points[next_free_idx++] = strength;
-
-                        // std::cout << "Evaluated " << (hand_strength[0] + hand_strength[1] + hand_strength[2]) << " combinations for opponent cards" << std::endl;
                     }
                 }
 
@@ -94,10 +92,6 @@ void compute_5_hand_distribution_fast(int card1, int card2, std::ofstream& f1) {
                     f1 << binned_distribution[qq] << ",";
                 }
                 f1 << binned_distribution[NBINS-1] << std::endl;
-                f1.flush();
-                f1.close();
-
-                throw std::runtime_error("Stop here.");
             }
         }
     }

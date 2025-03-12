@@ -12,7 +12,7 @@
 mkdir ~/tmp
 export TMPDIR=~/tmp
 
-g++ -std=c++20 -fopenmp -O3 -march=native -mtune=native -funroll_loops dist_flop.cpp ../src/utils.cpp ../src/hash.cpp -o flop_main
+g++ -std=c++20 -fopenmp -O3 -march=native -mtune=native -funroll-loops dist_flop.cpp ../src/utils.cpp ../src/hash.cpp -o flop_main
 
 ./flop_main
 
