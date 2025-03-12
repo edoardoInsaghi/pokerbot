@@ -1,7 +1,7 @@
 # pokerbot
 
 A bunch of resources I am using along the way: 
-- This is where I have stolen from the poker hand evaluator [https://github.com/HenryRLee/PokerHandEvaluator]
+- This is from where I have stolen the poker hand evaluator [https://github.com/HenryRLee/PokerHandEvaluator]
 - Classic Cactus Kev poker hand evaluator [http://suffe.cool/poker/evaluator.html]
 - Pluribus, SuperHuman AI For Six Players No Limit Texas Hold'em Poker [https://knowen-production.s3.amazonaws.com/uploads/attachment/file/3485/AI%2Bfor%2Bmultiplayer%2Bpoker.pdf]
 - Depth-Limited Solving for Imperfect-Information Games [https://arxiv.org/pdf/1805.08195]
