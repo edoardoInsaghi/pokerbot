@@ -17,6 +17,7 @@
 #include "hash.h"
 #include <chrono>
 #include <bitset>
+#include <cstdint>
 //#include <omp.h>
 //#include <mpi.h>
 
@@ -30,6 +31,8 @@ void print_cards(std::vector<Card>& cards);
 void sort_hand(std::array<Card, 2>& hand);
 Card draw_card(std::vector<Card>& deck);
 void burn_card(std::vector<Card>& deck);
+
+
 
 // Player Struct
 struct Player {
