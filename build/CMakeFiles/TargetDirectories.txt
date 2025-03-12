@@ -1,3 +1,0 @@
-/Users/home/Desktop/CFR/build/CMakeFiles/main.dir
-/Users/home/Desktop/CFR/build/CMakeFiles/edit_cache.dir
-/Users/home/Desktop/CFR/build/CMakeFiles/rebuild_cache.dir

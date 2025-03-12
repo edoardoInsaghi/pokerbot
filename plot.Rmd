@@ -13,3 +13,9 @@ df = runs %>% pivot_longer(
 ggplot(data=df, aes(x=hands, y=Stack, col=Player)) + geom_line() + theme_bw()
 ```
 
+```{r}
+data = turn_distributions["2-3-4-5-11-48", ]
+hist(as.numeric(data), breaks=30, freq=F)
+```
+
+

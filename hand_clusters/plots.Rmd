@@ -1,0 +1,205 @@
+```{r}
+f = read.csv("data_flop.csv", row.names=1, header=F)
+```
+
+```{r}
+rows_with_na <- !complete.cases(f)
+rows_with_na_data <- f[rows_with_na, ]
+
+na_row_indices <- which(rows_with_na)
+print(na_row_indices)
+print(f[rows_with_na,])
+```
+
+```{r}
+print(max(f[,3], na.rm=T))
+print(min(f[,3], na.rm=T))
+print(max(f[,4], na.rm=T))
+print(min(f[,4], na.rm=T))
+
+q3 = quantile(f[,3], na.rm=T, probs = seq(0, 1, by = 0.01))
+q4 = quantile(f[,4], na.rm=T, probs = seq(0, 1, by = 0.01))
+
+q_3 = q3[3]
+q_4 = q4[97]
+
+f[,3] = ifelse(is.na(f[,3]) | f[,3] < q_3, q_3, f[,3])
+hist(f[,3], probability=T)
+
+f[,4] = ifelse(is.na(f[,4]) | f[,4] > q_4, q_4, f[,4])
+hist(f[,4], probability=T)
+```
+
+```{r}
+library(dplyr)
+f = f %>% select(-V7)
+f = f %>% mutate(across(.cols = -c(V6, V7), .fns = scale))
+hist(f[,1], probability=T)
+hist(f[,2], probability=T)
+hist(f[,3], probability=T)
+hist(f[,4], probability=T)
+hist(f[,5], probability=T)
+
+f = format(f, digits=4)
+write.table(f, "data_flop.csv", sep = ",", row.names = TRUE, col.names = FALSE, quote = FALSE)
+```
+
+```{r}
+library(ggplot2)
+res = prcomp(f, scale=F)
+r = as.data.frame(res$x)
+results = read.csv("kmeans_clusters_flop.csv", row.names=1)
+f$cluster = results$cluster
+ssample = 1e5
+tosample = sample(nrow(r), ssample)
+df = data.frame("Group"=as.factor(f$cluster)[tosample],
+                "PC1"=r$PC1[tosample], "PC2"=r$PC2[tosample])
+ggplot(data=df, aes(x=PC1, y=PC2, color=Group)) + geom_point(size=0.2) + theme(legend.position="none")
+```
+
+```{r}
+library(umap)
+n = 1e4
+sam = sample(nrow(f), n)
+dfd = f[sam, ]
+um = umap(dfd)
+u = as.data.frame(um$data)
+u$Group = as.factor(f$cluster)[sam]
+ggplot(u, aes(x=V2, y=V1, color=Group)) + geom_point(size=0.2) + theme(legend.position="none")
+```
+
+
+
+
+
+
+
+##### 32 GB of gpu ram on 1 gpu node on orfeo (V100)
+
+```{r}
+library(ggplot2)
+time_data = data.frame("log2_batch_size"=c(1,2,3,4,5,6,7),
+                       
+                       "times"=c(0.003630518913269043,
+                                 0.00436052083969116,
+                                 0.00686916112899780,
+                                 0.01232419013977050,
+                                 0.02213696241378784,
+                                 0.07600479125976563,
+                                 0.17508772611618043)
+                       )
+
+time_data$time_per_frame = time_data$times / c(2,4,8,16,32,64,128)
+
+
+p = ggplot(data=time_data, aes(x=log2_batch_size, y=time_per_frame)) + 
+  geom_point() + geom_line() + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) + 
+  labs(x="log2 batchsize", 
+       y="time per frame (s)",
+       title="Time per frame as function of the batchsize",
+       subtitle="V100 - 32GB ram") +
+  theme_bw()
+p
+```
+
+
+```{r}
+library(ggplot2)
+data = read.csv("~/Desktop/eXactLab/Rail/defects/point_times_nohp.csv")
+data$log2_batch_size = c(1,2,3,4,5,6,7)
+data$time_per_frame = data$elapsed_time / c(2,4,8,16,32,64,128)
+
+p = ggplot(data=data, aes(x=log2_batch_size, y=time_per_frame)) + 
+  geom_point() + geom_line() + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) + 
+  labs(x="log2 batchsize", 
+       y="time per frame (s)",
+       title="Time per frame as function of the batchsize",
+       subtitle="V100 - 32GB ram") +
+  theme_bw()
+p
+
+```
+
+
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(viridis)
+
+# Define data
+wer <- c(0.2298, 0.4390, 0.3448, 0.2388) * 100
+MODELS = c("tiny_FULL", "tiny_LoRA", "base_LoRA", "small_LoRA")
+
+df <- data.frame(Model = model, LoRA = LoRA, WER = wer, MODEL = MODELS)
+df$MODEL = factor(df$MODEL, levels=MODELS)
+
+
+# Plot
+p <- ggplot(df, aes(y=WER, x=MODEL, fill=MODEL)) + 
+  geom_bar(stat="identity", position="dodge", color="black", show.legend=FALSE) + 
+  #scale_fill_gradient(low="lightgreen", high='yellow') + 
+  scale_fill_manual(values=c("deepskyblue", "orange", "forestgreen", "red3")) + 
+  labs(title="Word Error Rate on Italian LibriSpeech", x="Model", y="WER %") +
+  theme(legend.position="none") +
+  theme_bw()
+
+print(p)
+
+```
+
+
+
+```{r}
+
+wer_before_after <- c(0.056, 1.1, 0.056, 0.98, 0.042, 0.8, 0.031, 0.35) * 100
+models <- rep(c("tiny_FULL", "tiny_LoRA", "base_LoRA", "small_LoRA"), each = 2)
+fine_tuning <- rep(c("Before", "After"), times = 4)
+
+# Create the dataframe
+df <- data.frame(WER = wer_before_after, Model = models, FineTuning = fine_tuning)
+
+# Factor the FineTuning column with specified levels
+df$FineTuning <- factor(df$FineTuning, levels = c("Before", "After"))
+df$Model = factor(df$Model, levels=c("tiny_FULL", "tiny_LoRA", "base_LoRA", "small_LoRA"))
+
+# Load ggplot2 library
+library(ggplot2)
+
+# Create the plot
+p <- ggplot(df, aes(x = Model, y = WER, fill = FineTuning, group = FineTuning)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  labs(title = "WER on English data Before and After Fine-Tuning", x = "Model", y = "WER %") + 
+  theme_bw()
+
+# Print the plot
+print(p)
+
+```
+
+
+```{r}
+
+wer_values <- c(0.4815, 0.4390, 0.4083, 0.3983, 0.44, 0.403, 0.377, 0.365) * 100
+x_values <- rep(c(16, 32, 64, 128), 2)
+decoding = c(rep("Greedy", 4), rep("Beam Search", 4))
+
+df <- data.frame(WER=wer_values, X=x_values, FineTuning=fine_tuning, Decoding=decoding)
+
+library(ggplot2)
+
+p <- ggplot(df, aes(x=X, y=WER)) +
+  geom_line(aes(group=decoding)) +
+  geom_point(size=2.5, aes(color=Decoding, group=Decoding), alpha=1) +
+  #scale_color_gradient(low="deepskyblue", high="red3") + 
+  labs(title = "Word Error Rate on Italian LibriSpeech", x = "LoRA rank", y = "WER%") +
+  theme_bw() +
+  scale_x_continuous(breaks = c(16, 32, 64, 128), labels = c("16", "32", "64", "128"))
+
+print(p)
+
+```
+
