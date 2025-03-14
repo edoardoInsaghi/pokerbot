@@ -2,19 +2,6 @@
 #include <omp.h>
 #include "../src/utils.hpp"
 
-/*
-
-TODO: 
-
-understand standardization of poker hands to reduce size (isomorphism)
-find representation of n poker cards in hand
-find representation of equivalence classes of poker hands (isomorphic hands)
-find representation of canonical poker hands
-find map from hand to equivalence class
-compute binned distribution for each equivalence class
-
-*/
-
 const int NBINS = 50;
 
 void compute_5_hand_distribution_fast(int card1, int card2, std::ofstream& f1) {

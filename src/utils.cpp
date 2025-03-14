@@ -38,6 +38,21 @@ void burn_card(std::vector<Card>& deck) {
     deck.pop_back();
 }
 
+std::string get_string_from_id(uint64_t id){
+    std::string hand = "";
+    hand += Card(id & 0x3F).repr();
+    hand += Card((id >> 6) & 0x3F).repr();
+
+    uint64_t community_mask = id >> 12;
+    for (int i = 0; i < 52; ++i) {
+        if (community_mask & (1ULL << i)) {
+            hand += Card(i).repr();
+        }
+    }
+
+    return hand;
+}
+
 
 
 
@@ -394,8 +409,8 @@ void play_hand(std::array<Player, 6>& Players) {
 
     go_to_showdown(H);
 }
-
 */
+
 
 
 void unroll_game_from_history(History& H) {

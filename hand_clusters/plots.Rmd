@@ -203,3 +203,37 @@ print(p)
 
 ```
 
+
+```{r}
+library(ggplot2)
+plot_bins = function(bins){
+  n_bins = length(bins)
+
+  bin_positions = seq(0, 1, length.out = n_bins + 1)
+
+  df = data.frame(
+    x_min = head(bin_positions, -1),
+    x_max = tail(bin_positions, -1),
+    height = bin_heights
+  )
+  
+  ggplot(df, aes(xmin = x_min, xmax = x_max, ymin = 0, ymax = height)) +
+    geom_rect(fill = "steelblue", color = "black") +
+    theme_minimal()
+}
+```
+
+
+
+```{r}
+preflop = 169
+flop = choose(52, 2) * choose(50, 3)
+turn = choose(52, 2) * choose(50, 4)
+river = choose(52, 2) * choose(50, 5)
+choose(45, 2)
+
+data = read.csv("distributions.csv", header=FALSE)
+ob = data[data$V1 == "2C2D2H9HJS", ]
+hist(as.numeric(ob), breaks=50)
+```
+

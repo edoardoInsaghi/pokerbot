@@ -75,7 +75,6 @@ void compute_5_hand_distribution_fast(int card1, int card2, std::ofstream& f1) {
                         f1 << binned_distribution[qq] << ",";
                     }
                     f1 << binned_distribution[NBINS-1] << std::endl;
-
                 }
             }
         }

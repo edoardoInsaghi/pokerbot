@@ -1,2 +1,5 @@
 *.csv
 build/
+hand_clusters/distributions_flop.csv
+hand_clusters/distributions_turn.csv
+hand_clusters/Eigen/

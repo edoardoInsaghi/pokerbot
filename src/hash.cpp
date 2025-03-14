@@ -1,3 +1,5 @@
+#include "hash.h"
+
 extern const short bit_of_div_4[52];
 extern const short bit_of_mod_4_x_3[52];
 extern const unsigned int choose[53][10];
@@ -22,7 +24,6 @@ int hash_quinary(const unsigned char q[], int k) {
 
     return sum;
 }
-#include "hash.h"
 
 int evaluate_7cards(int a, int b, int c, int d, int e, int f, int g) {
 
