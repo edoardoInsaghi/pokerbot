@@ -13,12 +13,15 @@
 
 
 using namespace Eigen;
+const int NBINS = 50; 
+const int NCARDS = 5; 
+const float NSAMPLES = 1081.0;
+const int NROWS = 25989600;
 
-
-int compute_emd(const std::array<float, 50>& a, const std::array<float, 50>& b) {
+int compute_emd(const std::array<float, NBINS>& a, const std::array<float, NBINS>& b) {
     int emd = 0;
-    #pragma omp simd reduction(+:emd)
-    for (size_t i = 0; i < 50; ++i) {
+    // #pragma omp simd reduction(+:emd)
+    for (size_t i=0; i<50; ++i) {
         emd += std::abs(a[i] - b[i]);
     }
     return emd;
@@ -37,10 +40,7 @@ std::vector<size_t> select_landmarks(size_t total, size_t k, unsigned seed=42) {
 
 int main(int argc, char** argv) {
  
-    const int NBINS = 50; 
-    const int NCARDS = 5; 
-    const float NSAMPLES = 1081.0;
-    const int NROWS = 25989600;
+
 
     std::unordered_map<uint64_t, std::array<float, NBINS>> cumulatives;
     std::ifstream file("distributions_flop.csv");
@@ -81,13 +81,13 @@ int main(int argc, char** argv) {
     std::cout << "Size of histograms: " << cumulatives.size() << std::endl;
     
     const size_t k = 1000;
-    auto landmarks = select_landmarks(cumulatives.size(), k);
+    std::vector<size_t> landmarks = select_landmarks(cumulatives.size(), k);
 
     // Compute landmark distance matrix
     MatrixXf D(k, k);
     #pragma omp parallel for collapse(2)
-    for (size_t i = 0; i < k; ++i) {
-        for (size_t j = 0; j < k; ++j) {
+    for (size_t i=0; i<k; ++i) {
+        for (size_t j=0; j<k; ++j) {
             D(i, j) = compute_emd(cumulatives[landmarks[i]], cumulatives[landmarks[j]]);
         }
     }
@@ -106,15 +106,14 @@ int main(int argc, char** argv) {
 
     // Project all points using LMDS
     MatrixXf L_pinv = Y.completeOrthogonalDecomposition().pseudoInverse();
-    std::cout << "Segfault here." << std::endl;
     VectorXf D_sq_mean = D_sq.rowwise().mean();
-    std::cout << "Segfault here1." << std::endl;
+
 
     MatrixXf embeddings(cumulatives.size(), d);
     #pragma omp parallel for
-    for (size_t i = 0; i < cumulatives.size(); ++i) {
+    for (size_t i=0; i<cumulatives.size(); ++i) {
         VectorXf d_sq(k);
-        for (size_t j = 0; j < k; ++j) {
+        for (size_t j=0; j<k; ++j) {
             float dist = compute_emd(cumulatives[i], cumulatives[landmarks[j]]);
             d_sq[j] = dist * dist;
         }
