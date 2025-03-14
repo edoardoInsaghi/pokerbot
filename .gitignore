@@ -1,5 +1,8 @@
 *.csv
+.DS_Store
 build/
 hand_clusters/distributions_flop.csv
+hand_clusters/distributions_flop.csv.xz
 hand_clusters/distributions_turn.csv
+hand_clusters/distributions_turn.csv.xz
 hand_clusters/Eigen/

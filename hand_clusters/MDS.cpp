@@ -113,13 +113,16 @@ int main(int argc, char** argv) {
     #pragma omp parallel for
     for (size_t i=0; i<cumulatives.size(); ++i) {
         VectorXf d_sq(k);
+        std::cout << "Processing point " << i << std::endl;
         for (size_t j=0; j<k; ++j) {
             float dist = compute_emd(cumulatives[i], cumulatives[landmarks[j]]);
+            std::cout << "Distance: " << dist << std::endl;
             d_sq[j] = dist * dist;
         }
         
         VectorXf rhs = -0.5 * (d_sq - D_sq_mean);
         embeddings.row(i) = L_pinv * rhs;
+        std::cout << "Embedding: " << embeddings.row(i) << std::endl;
     }
     std::cout << "Embeddings computed." << std::endl;
 
