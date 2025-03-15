@@ -20,10 +20,12 @@ const int NROWS = 25989600;
 
 int compute_emd(const std::array<float, NBINS>& a, const std::array<float, NBINS>& b) {
     int emd = 0;
-    // #pragma omp simd reduction(+:emd)
+    
+    #pragma omp simd reduction(+:emd)
     for (size_t i=0; i<50; ++i) {
         emd += std::abs(a[i] - b[i]);
     }
+    // std::cout << "Hello there" << std::endl;
     return emd;
 }
 
@@ -46,7 +48,7 @@ int main(int argc, char** argv) {
     std::ifstream file("distributions_flop.csv");
 
     std::string line;
-    #pragma omp parallel for schedule(dynamic) shared(cumulatives)
+    #pragma omp parallel for schedule(static) shared(cumulatives)
     for (int i=0; i<NROWS; ++i) {
         std::string line_copy;
         {
@@ -110,19 +112,22 @@ int main(int argc, char** argv) {
 
 
     MatrixXf embeddings(cumulatives.size(), d);
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (size_t i=0; i<cumulatives.size(); ++i) {
         VectorXf d_sq(k);
-        std::cout << "Processing point " << i << std::endl;
+        //std::cout << "Processing point " << i << std::endl;
         for (size_t j=0; j<k; ++j) {
             float dist = compute_emd(cumulatives[i], cumulatives[landmarks[j]]);
-            std::cout << "Distance: " << dist << std::endl;
+            //std::cout << "Distance: " << dist << std::endl;
             d_sq[j] = dist * dist;
         }
         
         VectorXf rhs = -0.5 * (d_sq - D_sq_mean);
         embeddings.row(i) = L_pinv * rhs;
-        std::cout << "Embedding: " << embeddings.row(i) << std::endl;
+        //std::cout << "Embedding: " << embeddings.row(i) << std::endl;
+        if (i % 1000000 == 0) {
+            std::cout << "Processed " << 1000000 << " points." << std::endl;
+        }
     }
     std::cout << "Embeddings computed." << std::endl;
 

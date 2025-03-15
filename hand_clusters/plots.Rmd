@@ -207,25 +207,37 @@ print(p)
 ```{r}
 library(ggplot2)
 plot_bins = function(bins){
-  n_bins = length(bins)
-
-  bin_positions = seq(0, 1, length.out = n_bins + 1)
-
-  df = data.frame(
-    x_min = head(bin_positions, -1),
-    x_max = tail(bin_positions, -1),
-    height = bin_heights
-  )
+  n_bins <- length(bins)
   
-  ggplot(df, aes(xmin = x_min, xmax = x_max, ymin = 0, ymax = height)) +
-    geom_rect(fill = "steelblue", color = "black") +
-    theme_minimal()
+  # Check if the number of bins is 50
+  if (n_bins != 50) {
+    stop("The number of bins must be 50.")
+  }
+  
+  # Create the breaks for the x-axis
+  breaks <- seq(0, 1, length.out = n_bins + 1)
+  
+  # Plot the histogram using barplot
+  barplot(bins, space = 0, col = "skyblue", border = "black",
+          xlab = "Value", ylab = "Frequency", 
+          main = "Histogram of Bins",
+          axes = FALSE)
+  
+  # Add custom x-axis
+  axis(1, at = seq(0, n_bins, by = n_bins/10), labels = seq(0, 1, by = 0.1))
+  
+  # Add y-axis
+  axis(2)
+  
+  # Add a box around the plot
+  box()
 }
 ```
 
 
 
 ```{r}
+library(dplyr)
 preflop = 169
 flop = choose(52, 2) * choose(50, 3)
 turn = choose(52, 2) * choose(50, 4)
@@ -233,7 +245,18 @@ river = choose(52, 2) * choose(50, 5)
 choose(45, 2)
 
 data = read.csv("distributions.csv", header=FALSE)
-ob = data[data$V1 == "2C2D2H9HJS", ]
-hist(as.numeric(ob), breaks=50)
+ob = as.numeric(data %>% filter(V1 == "TCQD7H9HQH") %>% select(!V1))
+plot_bins(ob)
+
+ob1 = as.numeric(data %>% filter(V1 == "TDQC7H9HQH") %>% select(!V1))
+plot_bins(ob1)
+
+```
+```{r}
+ob = as.numeric(data %>% filter(V1 == "TCQD7H9HQH") %>% select(!V1))
+plot_bins(ob)
+
+ob1 = as.numeric(data %>% filter(V1 == "TSQD7H9HQH") %>% select(!V1))
+plot_bins(ob1)
 ```
 
