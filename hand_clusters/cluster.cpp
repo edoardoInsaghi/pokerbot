@@ -14,8 +14,8 @@ using namespace Eigen;
 const int NBINS = 50; 
 const int NCARDS = 5; 
 const float NSAMPLES = 1081.0;
-// const int NROWS = 25989600; // Not needed anymore since we iterate by file end
-// const int CANON_NROWS = 1361802; // Not needed anymore
+const int NROWS = 25989600;
+const int CANON_NROWS = 1361802;
 
 float compute_emd(const std::array<float, NBINS>& a, const std::array<float, NBINS>& b) {
     float emd = 0;
@@ -32,7 +32,7 @@ struct KMeansResult {
 };
 
 KMeansResult kmeans_emd(const std::vector<std::pair<uint64_t, std::array<float, NBINS>>>& data, 
-                         int k, int max_iter = 10000, float tolerance = 1e-4) {
+                         int k, int max_iter = 1000000, float tolerance = 1e-4) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
@@ -48,8 +48,9 @@ KMeansResult kmeans_emd(const std::vector<std::pair<uint64_t, std::array<float, 
     int iter = 0;
 
     while (iter < max_iter) {
-        // Assign clusters for each observation
-        for (size_t i = 0; i < data.size(); ++i) {
+        
+        # pragma omp parallel for schedule(static)
+        for (size_t i=0; i<data.size(); ++i) {
             int best_cluster = 0;
             float min_distance = std::numeric_limits<float>::max();
             
@@ -63,12 +64,11 @@ KMeansResult kmeans_emd(const std::vector<std::pair<uint64_t, std::array<float, 
             assignments[i] = best_cluster;
         }
 
-        // Check if the assignments have stabilized
+        
         if (assignments == prev_assignments)
             break;
         prev_assignments = assignments;
 
-        // Update centroids
         std::vector<std::array<float, NBINS>> new_centroids(k, std::array<float, NBINS>{});
         std::vector<int> counts(k, 0);
 
@@ -80,9 +80,9 @@ KMeansResult kmeans_emd(const std::vector<std::pair<uint64_t, std::array<float, 
             counts[cluster]++;
         }
 
-        for (int j = 0; j < k; ++j) {
+        for (int j=0; j<k; ++j) {
             if (counts[j] == 0) {
-                // Reinitialize centroid if no points are assigned
+              
                 result.centroids[j] = data[dist(gen)].second;
             } else {
                 for (int b = 0; b < NBINS; ++b) {
@@ -92,19 +92,29 @@ KMeansResult kmeans_emd(const std::vector<std::pair<uint64_t, std::array<float, 
         }
 
         iter++;
-        std::cout << "Iteration " << iter << " completed." << std::endl;
+        //std::cout << "Iteration " << iter << " completed." << std::endl;
     }
 
     result.assignments = std::move(assignments);
     return result;
 }
 
-int main(int argc, char** argv) {
-    // Open the input file and store observations in order.
-    std::ifstream file("canon_distributions_flop.csv");
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file canon_distributions_flop.csv");
+
+float get_kmeans_within_var(KMeansResult& result, std::vector<std::pair<uint64_t, std::array<float, NBINS>>> data) {
+    float within_var = 0;
+    for (size_t i=0; i<data.size(); ++i) {
+        for (size_t j=0; j<result.centroids.size(); ++j) {
+            if (result.assignments[i] == j) {
+                within_var += compute_emd(data[i].second, result.centroids[j]);
+            }
+        }
     }
+    return within_var;
+}
+
+int main(int argc, char** argv) {
+
+    std::ifstream file("canon_distributions_flop.csv");
 
     std::vector<std::pair<uint64_t, std::array<float, NBINS>>> data;
     std::string line;
@@ -120,7 +130,7 @@ int main(int argc, char** argv) {
         
         std::array<float, NBINS> cdf{};
         std::string item;
-        for (int j = 0; j < NBINS; ++j) {
+        for (int j=0; j<NBINS; ++j) {
             if (!std::getline(ss, item, ',')) break;
             cdf[j] = std::stof(item) / NSAMPLES;
         }
@@ -136,11 +146,10 @@ int main(int argc, char** argv) {
 
     std::cout << "Total observations read: " << data.size() << std::endl;
 
-    // Run clustering
-    int NUM_CLUSTERS = 3;
+    /*
+    int NUM_CLUSTERS = 512;
     KMeansResult result = kmeans_emd(data, NUM_CLUSTERS);
 
-    // Write output preserving the original order
     std::ofstream out_file("flop_clusters.csv");
     if (!out_file.is_open()) {
         throw std::runtime_error("Could not open output file flop_clusters.csv");
@@ -149,7 +158,21 @@ int main(int argc, char** argv) {
         std::string hand_str = get_string_from_id(data[i].first);
         out_file << hand_str << "," << result.assignments[i] << "\n";
     }
-    out_file.close();
+    out_file.close();    
+    */
+
+   int attempts = 3;
+   std::vector<int> clusters = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+
+    for (int cluster : clusters) {
+        for (int i=0; i<attempts; ++i) {
+            std::cout << "Running k-means with " << cluster << " clusters." << std::endl;
+            KMeansResult result = kmeans_emd(data, cluster);
+            float within_var = get_kmeans_within_var(result, data);
+            std::cout << "Within-cluster variance: " << within_var << std::endl;
+        }
+        std::cout << std::endl;
+    }
 
     return 0;
 }
