@@ -66,6 +66,32 @@ std::array<uint8_t, N> get_hand_from_string(std::string& hand_string) {
 
 std::string get_string_from_id(uint64_t id);
 
+template <int N>
+uint64_t get_canon_hand_id(std::array<uint8_t, N>& hand) {
+    
+    uint8_t suit_map[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t next_suit = 0;
+    for (auto& card : hand) {
+        uint8_t original_suit = card % 4;
+        if (suit_map[original_suit] == 0xFF) {
+            suit_map[original_suit] = next_suit++;
+        }
+        card = (card / 4) * 4 + suit_map[original_suit]; // New canonical card
+    }
+
+    if (hand[0] > hand[1]) std::swap(hand[0], hand[1]);
+    std::sort(hand.begin() + 2, hand.end());
+
+    uint64_t canonical_id = hand[0] | (hand[1] << 6);
+    uint64_t community_mask = 0;
+    for (size_t i=2; i<N; ++i) {
+        community_mask |= (1ULL << hand[i]);
+    }
+    canonical_id |= (community_mask << 12);
+
+    return canonical_id;
+}
+
 
 
 
