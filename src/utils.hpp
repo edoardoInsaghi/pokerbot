@@ -1,23 +1,23 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <array>
+#include "card.h"
+#include "hash.h"
+
 #include <vector>
 #include <random>
-#include <unordered_map>
 #include <unordered_set>
 #include <iostream>
 #include <algorithm>
-#include <string>
 #include <sstream>
 #include <fstream>
-#include <random>
+#include <iostream>
 #include <cmath>
-#include "card.h"
-#include "hash.h"
 #include <chrono>
 #include <bitset>
 #include <cstdint>
+#include <stdexcept>
+
 //#include <omp.h>
 //#include <mpi.h>
 
@@ -37,8 +37,8 @@ uint64_t get_hand_id(std::array<uint8_t, N>& hand){ // N is the total number of 
 
     /*
         Each hand can be represented with a 64-bit integer. 
-        The first 12 bits represent the cards in hand, they are sorted as this representation is not invariant with respect to permutations.h1
-        The next 52 bits store information about the community cards, represented as a one hot bit mask.
+        The first 12 bits represent the cards in hand, they are sorted as this representation is not invariant with respect to permutations
+        The next 52 bits store information about the community cards, represented as a one hot bit masks, combined with the | operator.
     */
 
     uint8_t h1 = hand[0], h2 = hand[1];

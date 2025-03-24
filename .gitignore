@@ -6,3 +6,9 @@ hand_clusters/distributions_flop.csv.xz
 hand_clusters/distributions_turn.csv
 hand_clusters/distributions_turn.csv.xz
 hand_clusters/Eigen/
+hand_clusters/umappp/
+hand_clusters/canon_distributions_flop.csv
+hand_clusters/canon_distributions_turn.csv
+hand_clusters/flop_clusters.csv
+hand_clusters/turn_clusters.csv
+hand_clusters/flop_embeddings.csv

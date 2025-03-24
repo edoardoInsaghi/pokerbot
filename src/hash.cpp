@@ -4,7 +4,7 @@ extern const short bit_of_div_4[52];
 extern const short bit_of_mod_4_x_3[52];
 extern const unsigned int choose[53][10];
 extern const int dp[5][14][10];
-extern const short flush[8192];
+extern const short yflush[8192];
 extern const unsigned char suits[4609];
 extern const short noflush7[49205];
 
@@ -49,7 +49,7 @@ int evaluate_7cards(int a, int b, int c, int d, int e, int f, int g) {
         suit_binary[f & 0x3] |= bit_of_div_4[f];  // (1 << (f / 4))
         suit_binary[g & 0x3] |= bit_of_div_4[g];  // (1 << (g / 4))
 
-        return flush[suit_binary[suits[suit_hash] - 1]];
+        return yflush[suit_binary[suits[suit_hash] - 1]];
     }
 
     unsigned char quinary[13] = {0};

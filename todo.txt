@@ -1,2 +1,10 @@
-check imports in various files
-possibly one big cmake to handle everything ??
+-find decent way to cluster river hands
+-find state space abstraction beyond hands, handle continuous bets both for states and actions, possibly if player stack goes to 0 the player loses, this would allow for a easy discretisation in the state representation given by needed_bet / player_stack between [0, 1]
+-possibly one big cmake to handle everything ??
+-clean plots file, still to understand why mds yields wrong results with clustering
+-representation and definition of state
+-how to deal with raises
+-check recursive function to play poker hands
+-implement cfr and variants
+-check depth limited search for imperfect information games
+-function that takes a strategy map<state_representation, distribution_over_actions> and computes exploitability !!

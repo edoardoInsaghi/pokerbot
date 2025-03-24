@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     std::ifstream file("canon_distributions_flop.csv");
 
     std::string line;
-    #pragma omp parallel for schedule(dynamic) shared(cumulatives)
+    // #pragma omp parallel for schedule(dynamic) shared(cumulatives)
     for (int i=0; i<CANON_NROWS; ++i) {
         std::string line_copy;
         {
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
         cumulatives.emplace(key, std::move(cdf));
 
         if (i % 100000 == 0) {
-            std::cout << "Processed " << 1000000 << " rows." << std::endl;
+            std::cout << "Processed " << i << " rows." << std::endl;
         }
     }
 
@@ -120,9 +120,8 @@ int main(int argc, char** argv) {
     MatrixXf L_pinv = Y.completeOrthogonalDecomposition().pseudoInverse();
     VectorXf D_sq_mean = D_sq.rowwise().mean();
 
-
     MatrixXf embeddings(cumulatives.size(), d);
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(dynamic)
     for (size_t i=0; i<all_keys.size(); ++i) {
         const uint64_t key = all_keys[i];
         const auto& value = cumulatives.at(key);

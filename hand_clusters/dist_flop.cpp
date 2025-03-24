@@ -1,6 +1,5 @@
-#include <fstream>
-#include <omp.h>
 #include "../src/utils.hpp"
+#include <omp.h>
 
 const int NBINS = 50;
 
@@ -24,9 +23,6 @@ void compute_5_hand_distribution_fast(int card1, int card2, std::ofstream& f1) {
                 Card b3(board3);
 
                 hand << c1.repr() << c2.repr() << b1.repr() << b2.repr() << b3.repr() << ",";
-
-                // TODO: Turn hand into its canonical representation and check if such representation has been processed already
-                // If so, continue
 
                 std::array<float, 1081> data_points;
                 int next_free_idx = 0;

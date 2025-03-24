@@ -1,6 +1,5 @@
-#include <fstream>
-#include <omp.h>
 #include "../src/utils.hpp"
+#include <omp.h>
 
 const int NBINS = 20;
 
