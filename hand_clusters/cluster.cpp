@@ -20,6 +20,7 @@ const int CANON_NROWS = 25989600;
 // const int SCALE = int(1e6);
 // const int CANON_NROWS = 15111642;
 
+
 float compute_emd(const std::array<float, NBINS>& a, const std::array<float, NBINS>& b) {
     float emd = 0;
     for (size_t i = 0; i < NBINS; ++i) {

@@ -92,6 +92,10 @@ uint64_t get_canon_hand_id(std::array<uint8_t, N>& hand) {
     return canonical_id;
 }
 
+std::unordered_map<uint64_t, int> load_clusters_flop(std::string filename);
+std::unordered_map<uint64_t, int> load_clusters_turn(std::string filename);
+int cluster_river_hand(std::array<int, 7> cards);
+
 
 
 

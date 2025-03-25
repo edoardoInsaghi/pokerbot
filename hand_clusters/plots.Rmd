@@ -22,12 +22,13 @@ plot_bins = function(bins, hand=NULL){
   
   axis(1, at = seq(0, n_bins, by = n_bins/10), labels = seq(0, 1, by = 0.1))
   axis(2)
-  box()
 }
 ```
 
 
 ```{r}
+choose(52, 2) * choose(50, 4)
+
 library(dplyr)
 
 data = read.csv("canon_distributions_flop.csv", header=FALSE)
@@ -49,10 +50,11 @@ data$V1 = rownames(data)
 library(umap)
 library(ggplot2)
 
-subsampled_data = data # %>% sample_n(10000)
+subsampled_data = data %>% sample_n(100000) %>% mutate(across(where(is.numeric), ~ . / 1081))
+
 names = rownames(subsampled_data)
 subsampled_data = subsampled_data %>% select(!V1)
-umap_result = umap(subsampled_data)
+umap_result = umap(subsampled_data, metric="manhattan", verbose=T, n_neighbors=50)
 umap_df = as.data.frame(umap_result$layout)
 umap_df$Clusters = as.factor(subsampled_data$Clusters)
 subsampled_data$V1 = names
@@ -61,11 +63,10 @@ subsampled_data$V1 = names
 ```{r}
 
 ggplot(umap_df, aes(V1, V2, color=Clusters)) +
-  geom_point(alpha = 0.5, size=0.4) +
-  theme_minimal() +
-  labs(title="UMAP Embeddings of Flop Hand Distributions", x="UMAP1", y="UMAP2") +
+  geom_point(alpha=0.5, size=0.3) +
+  theme_bw() +
+  labs(title="UMAP Embeddings of Flop Hand Strength Distributions", x="UMAP1", y="UMAP2") +
   theme(legend.position="none")
-  
   
 ```
 
@@ -80,11 +81,11 @@ rownames(clusters) = clusters$V1
 clusters = clusters %>% select(!V1)
 colnames(clusters) = c("Clusters")
 
-#df = cbind(embeddings, clusters)
-#df$Clusters = as.factor(df$Clusters)
+df = cbind(embeddings, clusters)
+df$Clusters = as.factor(df$Clusters)
 
-kmeans_result = kmeans(data %>% select(!V1), centers=2)
-df$Clusters = as.factor(kmeans_result$cluster)
+#kmeans_result = kmeans(data %>% select(!V1), centers=2)
+#df$Clusters = as.factor(kmeans_result$cluster)
 
 library(ggplot2)
 library(ggrepel)

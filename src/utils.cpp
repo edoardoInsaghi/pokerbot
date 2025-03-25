@@ -52,6 +52,100 @@ std::string get_string_from_id(uint64_t id){
     return hand;
 }
 
+std::unordered_map<uint64_t, int> load_clusters_flop(std::string filename) {
+
+    int SCALE = static_cast<int>(1e5);
+    std::ifstream file(filename);
+
+    std::unordered_map<uint64_t, int> data;
+    std::string line;
+    int line_count = 0;
+
+    while (std::getline(file, line)) {
+
+        std::stringstream ss(line);
+
+        std::string hand;
+        std::getline(ss, hand, ',');
+
+        std::array<uint8_t, 5> cards = get_hand_from_string<5>(hand);
+        uint64_t key = get_canon_hand_id<5>(cards);
+        
+        std::string cluster;
+        std::getline(ss, cluster, '\n');
+
+        data.emplace(key, std::stoi(cluster));
+        line_count++;
+        
+        if (line_count % SCALE == 0) {
+            std::cout << "Processed " << line_count << " rows." << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << "Loaded " << data.size() << " rows for flop clusters. \n" << std::endl;
+    file.close();
+    return data;
+}
+
+
+std::unordered_map<uint64_t, int> load_clusters_turn(std::string filename) {
+
+    int SCALE = static_cast<int>(1e6);
+    std::ifstream file(filename);
+
+    std::unordered_map<uint64_t, int> data;
+    std::string line;
+    int line_count = 0;
+
+    while (std::getline(file, line)) {
+
+        std::stringstream ss(line);
+
+        std::string hand;
+        std::getline(ss, hand, ',');
+
+        std::array<uint8_t, 6> cards = get_hand_from_string<6>(hand);
+        uint64_t key = get_canon_hand_id<6>(cards);
+        
+        std::string cluster;
+        std::getline(ss, cluster, '\n');
+
+        data.emplace(key, std::stoi(cluster));
+        line_count++;
+        
+        if (line_count % SCALE == 0) {
+            std::cout << "Processed " << line_count << " rows." << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << "Loaded " << data.size() << " rows for turn clusters. \n" << std::endl;
+    file.close();
+    return data;
+}
+
+
+int cluster_river_hand(std::array<int, 7> cards) {
+
+    float strength = 0;
+    int rank1 = evaluate_7cards(cards[0], cards[1], cards[2], cards[3], cards[4], cards[5], cards[6]);
+    for (int i=0; i<52; i++) {
+        for (int j=i+1; j<52; j++) {
+            if (i==cards[0] || i==cards[1] || i==cards[2] || i==cards[3] || i==cards[4] || i==cards[5] || i==cards[6]) continue;
+            if (j==cards[0] || j==cards[1] || j==cards[2] || j==cards[3] || j==cards[4] || j==cards[5] || j==cards[6]) continue;
+            int rank2 = evaluate_7cards(i, j, cards[2], cards[3], cards[4], cards[5], cards[6]);
+            if (rank1 < rank2) {
+                strength++;
+            } else if (rank1 == rank2) {
+                strength += 0.5;
+            } 
+        }
+    }
+
+    strength /= 990;
+    return static_cast<int>(strength * 100);
+}
 
 
 
@@ -233,182 +327,6 @@ void go_to_showdown(History& H) {
     std::cout << std::endl;
 }
 
-/*
-void play_hand(std::array<Player, 6>& Players) {
-
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::uniform_int_distribution<int> dist(0, 5);
-    std::poisson_distribution<> small_raise(1);
-    std::poisson_distribution<> medium_raise(4);
-    std::poisson_distribution<> big_raise(8);
-
-    History H;
-    H.players = Players;
-    H.total_pot = 0;
-    H.betting_round = 0;
-    H.small_blind_value = 10;
-    H.big_blind_value = 20;
-    H.small_blind = dist(g);
-    H.big_blind = (H.small_blind + 1) % 6;
-    H.current_player = 2;
-    H.last_raise_counter = 0;
-    H.total_fold = 0;
-    H.total_bet = {0, 0, 0, 0, 0, 0};
-    H.has_folded = {false, false, false, false, false, false};
-    H.last_action = {1, 1, 1, 1, 1, 1};
-
-    bet(H.small_blind_value, Players[H.small_blind], H);
-    bet(H.big_blind_value, Players[H.big_blind], H);
-
-    H.deck = new_deck();
-    shuffle_deck(H);
-    for (int i = 0; i < 6; i++) {
-        Players[i].hand[0] = draw_card(H.deck);
-        Players[i].hand[1] = draw_card(H.deck);
-    }
-
-    for (int i=0; i<4; ++i) { // 0: Preflop, 1: Flop, 2: Turn, 3: River
-
-        if (i != H.betting_round) {
-            throw std::runtime_error("Betting round and game round mismatch. \n");
-        }
-
-        switch (i) {
-            case 0:
-                // std::cout << "Preflop" << std::endl;
-                break;
-
-            case 1:
-                // std::cout << "Flop" << std::endl;
-                burn_card(H.deck);
-                for (int j=0; j<3; ++j) { 
-                    H.board.push_back(draw_card(H.deck));
-                }
-                // print_cards(H.board);
-                break;
-
-            case 2:
-                // std::cout << "Turn" << std::endl;
-                burn_card(H.deck);
-                H.board.push_back(draw_card(H.deck));
-                // print_cards(H.board);
-                break;
-
-            case 3:
-                // std::cout << "River" << std::endl;
-                burn_card(H.deck);
-                H.board.push_back(draw_card(H.deck));
-                // print_cards(H.board);
-                break;
-        }
-
-        H.raise_counter = 0;
-        H.last_raise_counter = 0;
-        H.current_player = (H.big_blind + 1) % 6;
-
-        while (true) { 
-
-            if (H.last_raise_counter == 6) { 
-                H.betting_round++; 
-                break; 
-            }
-
-            if (H.has_folded[H.current_player]) {
-                H.current_player = ++H.current_player % 6;
-                continue;
-            }
-
-            std::array<bool, 7> legal_actions = get_legal_actions(H);
-            // take some action, do later right now just pick random from legal actions
-            int action = random_policy(legal_actions);
-
-            switch (action) {
-                case 0:
-                    // std::cout << "Player " << H.current_player << " has done nothing." << std::endl;
-                    H.last_raise_counter++;
-                    H.last_action[H.current_player] = 0;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-
-                case 1:
-                    // std::cout << "Player " << H.current_player << " has checked." << std::endl;
-                    H.last_raise_counter++;
-                    H.last_action[H.current_player] = 1;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-
-                case 2: {
-                    // std::cout << "Player " << H.current_player << " has called." << std::endl;
-                    H.last_raise_counter++;
-                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
-                    bet(to_call, H.players[H.current_player], H);
-                    H.last_action[H.current_player] = 2;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-                }
-
-                case 3:
-                    // std::cout << "Player " << H.current_player << " has folded." << std::endl;
-                    H.last_raise_counter++;
-                    H.has_folded[H.current_player] = true;
-                    H.total_fold++;
-                    if (H.total_fold == 5) {
-                        for (int i=0; i<6; i++) {
-                            if (!H.has_folded[i]) {
-                                // std::cout << "Player " << i << " has won the pot. " << H.total_pot << std::endl;
-                                H.players[i].stack += H.total_pot;
-                                break;
-                            }
-                        }
-                        return;
-                    }
-                    H.last_action[H.current_player] = 3;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-
-                case 4: {
-                    // std::cout << "Player " << H.current_player << " has raised small." << std::endl;
-                    H.raise_counter++;
-                    H.last_raise_counter = 1;
-                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
-                    int betting = to_call + small_raise(g) * H.big_blind_value;
-                    bet(betting, H.players[H.current_player], H);
-                    H.last_action[H.current_player] = 4;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-                }
-
-                case 5: {
-                    // std::cout << "Player " << H.current_player << " has raised medium." << std::endl;
-                    H.raise_counter++;
-                    H.last_raise_counter = 1;
-                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
-                    int betting = to_call + medium_raise(g) * H.big_blind_value;
-                    bet(betting, H.players[H.current_player], H);
-                    H.last_action[H.current_player] = 4;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-                }
-
-                case 6: {
-                    // std::cout << "Player " << H.current_player << " has raised big." << std::endl;
-                    H.raise_counter++;
-                    H.last_raise_counter = 1;
-                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
-                    int betting = to_call + small_raise(g) * H.big_blind_value;
-                    bet(betting, H.players[H.current_player], H);
-                    H.last_action[H.current_player] = 4;
-                    H.current_player = ++H.current_player % 6;
-                    break;
-                }
-            }
-        }
-    }
-
-    go_to_showdown(H);
-}
-*/
 
 
 
@@ -604,3 +522,189 @@ int get_cluster_hand(int a, int b) {
 }
 
 ////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+/*
+void play_hand(std::array<Player, 6>& Players) {
+
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::uniform_int_distribution<int> dist(0, 5);
+    std::poisson_distribution<> small_raise(1);
+    std::poisson_distribution<> medium_raise(4);
+    std::poisson_distribution<> big_raise(8);
+
+    History H;
+    H.players = Players;
+    H.total_pot = 0;
+    H.betting_round = 0;
+    H.small_blind_value = 10;
+    H.big_blind_value = 20;
+    H.small_blind = dist(g);
+    H.big_blind = (H.small_blind + 1) % 6;
+    H.current_player = 2;
+    H.last_raise_counter = 0;
+    H.total_fold = 0;
+    H.total_bet = {0, 0, 0, 0, 0, 0};
+    H.has_folded = {false, false, false, false, false, false};
+    H.last_action = {1, 1, 1, 1, 1, 1};
+
+    bet(H.small_blind_value, Players[H.small_blind], H);
+    bet(H.big_blind_value, Players[H.big_blind], H);
+
+    H.deck = new_deck();
+    shuffle_deck(H);
+    for (int i = 0; i < 6; i++) {
+        Players[i].hand[0] = draw_card(H.deck);
+        Players[i].hand[1] = draw_card(H.deck);
+    }
+
+    for (int i=0; i<4; ++i) { // 0: Preflop, 1: Flop, 2: Turn, 3: River
+
+        if (i != H.betting_round) {
+            throw std::runtime_error("Betting round and game round mismatch. \n");
+        }
+
+        switch (i) {
+            case 0:
+                // std::cout << "Preflop" << std::endl;
+                break;
+
+            case 1:
+                // std::cout << "Flop" << std::endl;
+                burn_card(H.deck);
+                for (int j=0; j<3; ++j) { 
+                    H.board.push_back(draw_card(H.deck));
+                }
+                // print_cards(H.board);
+                break;
+
+            case 2:
+                // std::cout << "Turn" << std::endl;
+                burn_card(H.deck);
+                H.board.push_back(draw_card(H.deck));
+                // print_cards(H.board);
+                break;
+
+            case 3:
+                // std::cout << "River" << std::endl;
+                burn_card(H.deck);
+                H.board.push_back(draw_card(H.deck));
+                // print_cards(H.board);
+                break;
+        }
+
+        H.raise_counter = 0;
+        H.last_raise_counter = 0;
+        H.current_player = (H.big_blind + 1) % 6;
+
+        while (true) { 
+
+            if (H.last_raise_counter == 6) { 
+                H.betting_round++; 
+                break; 
+            }
+
+            if (H.has_folded[H.current_player]) {
+                H.current_player = ++H.current_player % 6;
+                continue;
+            }
+
+            std::array<bool, 7> legal_actions = get_legal_actions(H);
+            // take some action, do later right now just pick random from legal actions
+            int action = random_policy(legal_actions);
+
+            switch (action) {
+                case 0:
+                    // std::cout << "Player " << H.current_player << " has done nothing." << std::endl;
+                    H.last_raise_counter++;
+                    H.last_action[H.current_player] = 0;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+
+                case 1:
+                    // std::cout << "Player " << H.current_player << " has checked." << std::endl;
+                    H.last_raise_counter++;
+                    H.last_action[H.current_player] = 1;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+
+                case 2: {
+                    // std::cout << "Player " << H.current_player << " has called." << std::endl;
+                    H.last_raise_counter++;
+                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
+                    bet(to_call, H.players[H.current_player], H);
+                    H.last_action[H.current_player] = 2;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+                }
+
+                case 3:
+                    // std::cout << "Player " << H.current_player << " has folded." << std::endl;
+                    H.last_raise_counter++;
+                    H.has_folded[H.current_player] = true;
+                    H.total_fold++;
+                    if (H.total_fold == 5) {
+                        for (int i=0; i<6; i++) {
+                            if (!H.has_folded[i]) {
+                                // std::cout << "Player " << i << " has won the pot. " << H.total_pot << std::endl;
+                                H.players[i].stack += H.total_pot;
+                                break;
+                            }
+                        }
+                        return;
+                    }
+                    H.last_action[H.current_player] = 3;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+
+                case 4: {
+                    // std::cout << "Player " << H.current_player << " has raised small." << std::endl;
+                    H.raise_counter++;
+                    H.last_raise_counter = 1;
+                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
+                    int betting = to_call + small_raise(g) * H.big_blind_value;
+                    bet(betting, H.players[H.current_player], H);
+                    H.last_action[H.current_player] = 4;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+                }
+
+                case 5: {
+                    // std::cout << "Player " << H.current_player << " has raised medium." << std::endl;
+                    H.raise_counter++;
+                    H.last_raise_counter = 1;
+                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
+                    int betting = to_call + medium_raise(g) * H.big_blind_value;
+                    bet(betting, H.players[H.current_player], H);
+                    H.last_action[H.current_player] = 4;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+                }
+
+                case 6: {
+                    // std::cout << "Player " << H.current_player << " has raised big." << std::endl;
+                    H.raise_counter++;
+                    H.last_raise_counter = 1;
+                    int to_call = *std::max_element(H.total_bet.begin(), H.total_bet.end()) - H.total_bet[H.current_player];
+                    int betting = to_call + small_raise(g) * H.big_blind_value;
+                    bet(betting, H.players[H.current_player], H);
+                    H.last_action[H.current_player] = 4;
+                    H.current_player = ++H.current_player % 6;
+                    break;
+                }
+            }
+        }
+    }
+
+    go_to_showdown(H);
+}
+*/
